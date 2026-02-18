@@ -66,6 +66,22 @@ python workers/analyze_worker.py
 - `GET /api/v1/cases/{case_id}`
 - `GET /api/v1/cases/{case_id}/graph`
 
+## Deployed endpoints
+
+- Web dashboard: `https://nexus-mena-osint.vercel.app`
+- API service: `https://nexus-mena-osint-api.vercel.app`
+
+## Supabase
+
+- Linked project ref: `rpuimirkjxolxpiafwxq`
+- Applied migration: `supabase/migrations/0001_init.sql`
+
+Push future schema changes with:
+
+```bash
+SUPABASE_ACCESS_TOKEN=... npx supabase db push --linked --yes
+```
+
 ## Security posture
 
 - Do not place tokens in source files.
