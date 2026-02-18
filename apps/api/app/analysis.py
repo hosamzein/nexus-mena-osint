@@ -81,8 +81,12 @@ def analyze_items(items: List[ContentItem]) -> AnalysisResult:
     score = _score_from_signals(signals)
     clusters = _cluster_narratives(items)
     entity_counter: Counter[str] = Counter()
+    account_counter: Counter[str] = Counter()
+    language_counter: Counter[str] = Counter()
     for item in items:
         entity_counter.update(item.entities)
+        account_counter.update([item.author])
+        language_counter.update([item.language])
 
     return AnalysisResult(
         signals=signals,
@@ -90,5 +94,7 @@ def analyze_items(items: List[ContentItem]) -> AnalysisResult:
         severity=_severity(score),
         narrative_clusters=clusters,
         top_entities=[name for name, _ in entity_counter.most_common(6)],
+        top_accounts=[name for name, _ in account_counter.most_common(5)],
+        language_distribution=dict(language_counter),
         generated_at=datetime.now(timezone.utc),
     )

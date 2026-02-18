@@ -59,12 +59,23 @@ python workers/analyze_worker.py
 ## Core API endpoints
 
 - `GET /health`
+- `GET /api/v1/metrics`
+- `GET /api/v1/connectors`
+- `GET /api/v1/source-catalog`
 - `GET /api/v1/cases`
 - `POST /api/v1/cases`
 - `POST /api/v1/cases/{case_id}/collect`
 - `POST /api/v1/cases/{case_id}/analyze`
+- `POST /api/v1/cases/{case_id}/run-all`
+- `POST /api/v1/cases/{case_id}/generate-products`
 - `GET /api/v1/cases/{case_id}`
+- `GET /api/v1/cases/{case_id}/items`
 - `GET /api/v1/cases/{case_id}/graph`
+- `GET /api/v1/cases/{case_id}/alerts`
+- `GET /api/v1/cases/{case_id}/evidence`
+- `GET /api/v1/cases/{case_id}/timeline`
+- `GET /api/v1/cases/{case_id}/media-verification`
+- `GET /api/v1/cases/{case_id}/report`
 
 ## Deployed endpoints
 

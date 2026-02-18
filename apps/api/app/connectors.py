@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from hashlib import sha1
 from typing import Dict, List
 
-from .schemas import ContentItem, Platform
+from .schemas import ConnectorStatus, ContentItem, Platform, SourceCatalogEntry
 
 
 SEED_TEXT = {
@@ -35,6 +35,111 @@ SEED_TEXT = {
     ],
 }
 
+CONNECTOR_HEALTH = [
+    ConnectorStatus(
+        connector="sherlock-identity",
+        domain="social_identity",
+        health="healthy",
+        success_rate=0.98,
+        avg_latency_ms=420,
+    ),
+    ConnectorStatus(
+        connector="telegram-intel-pack",
+        domain="social_content",
+        health="healthy",
+        success_rate=0.95,
+        avg_latency_ms=510,
+    ),
+    ConnectorStatus(
+        connector="instagram-intel-pack",
+        domain="social_content",
+        health="degraded",
+        success_rate=0.88,
+        avg_latency_ms=860,
+        last_error="rate-limit burst in last run",
+    ),
+    ConnectorStatus(
+        connector="web-check-stack",
+        domain="web_infra",
+        health="healthy",
+        success_rate=0.99,
+        avg_latency_ms=310,
+    ),
+    ConnectorStatus(
+        connector="theharvester-domain-enum",
+        domain="web_infra",
+        health="healthy",
+        success_rate=0.93,
+        avg_latency_ms=740,
+    ),
+]
+
+SOURCE_CATALOG = [
+    SourceCatalogEntry(
+        id="src_awesome_osint",
+        name="Awesome OSINT",
+        category="catalog",
+        source_type="index",
+        origin_repo="jivoi/awesome-osint",
+        url="https://github.com/jivoi/awesome-osint",
+        tags=["catalog", "multi-domain", "discovery"],
+    ),
+    SourceCatalogEntry(
+        id="src_spiderfoot",
+        name="SpiderFoot",
+        category="engine",
+        source_type="tool",
+        origin_repo="smicallef/spiderfoot",
+        url="https://github.com/smicallef/spiderfoot",
+        tags=["automation", "correlation", "osint"],
+    ),
+    SourceCatalogEntry(
+        id="src_sherlock",
+        name="Sherlock",
+        category="identity",
+        source_type="tool",
+        origin_repo="sherlock-project/sherlock",
+        url="https://github.com/sherlock-project/sherlock",
+        tags=["username", "social", "discovery"],
+    ),
+    SourceCatalogEntry(
+        id="src_social_analyzer",
+        name="Social Analyzer",
+        category="identity",
+        source_type="tool",
+        origin_repo="qeeqbox/social-analyzer",
+        url="https://github.com/qeeqbox/social-analyzer",
+        tags=["identity", "confidence", "social"],
+    ),
+    SourceCatalogEntry(
+        id="src_web_check",
+        name="Web Check",
+        category="web_infra",
+        source_type="tool",
+        origin_repo="Lissy93/web-check",
+        url="https://github.com/Lissy93/web-check",
+        tags=["domain", "tls", "headers"],
+    ),
+    SourceCatalogEntry(
+        id="src_telegram_osint",
+        name="Telegram OSINT Toolbox",
+        category="social_content",
+        source_type="catalog",
+        origin_repo="The-Osint-Toolbox/Telegram-OSINT",
+        url="https://github.com/The-Osint-Toolbox/Telegram-OSINT",
+        tags=["telegram", "channels", "groups"],
+    ),
+    SourceCatalogEntry(
+        id="src_instagram_osint",
+        name="Osintgram",
+        category="social_content",
+        source_type="tool",
+        origin_repo="Datalux/Osintgram",
+        url="https://github.com/Datalux/Osintgram",
+        tags=["instagram", "posts", "metadata"],
+    ),
+]
+
 
 def _entity_extract(text: str) -> List[str]:
     entities = []
@@ -53,6 +158,10 @@ def collect_platform_items(case_id: str, query: str, platform: Platform, count: 
         text = f"{seed} | query={query}"
         author = f"{platform.value}_account_{i + 1}"
         fingerprint = sha1(f"{case_id}:{platform.value}:{author}:{text}".encode("utf-8")).hexdigest()[:12]
+        media_hash = None
+        if platform in {Platform.instagram, Platform.telegram, Platform.youtube}:
+            media_hash = sha1(f"media:{platform.value}:{i // 2}".encode("utf-8")).hexdigest()[:16]
+        narrative_key = "energy-claims-wave" if "claims" in text.lower() else "coordinated-amplification"
         items.append(
             ContentItem(
                 id=f"itm_{platform.value}_{fingerprint}",
@@ -64,6 +173,9 @@ def collect_platform_items(case_id: str, query: str, platform: Platform, count: 
                 observed_at=now - timedelta(minutes=i * 3),
                 language="ar" if i % 2 == 0 else "en",
                 engagement=(i + 1) * 120,
+                source_name=f"{platform.value}-collector",
+                media_hash=media_hash,
+                narrative_key=narrative_key,
                 entities=_entity_extract(text),
             )
         )
@@ -90,4 +202,20 @@ def build_case_graph(items: List[ContentItem]) -> Dict[str, List[Dict[str, str]]
             entity_node = f"entity:{entity}"
             nodes[entity_node] = {"id": entity_node, "label": entity, "type": "entity"}
             edges.append({"source": account_node, "target": entity_node, "type": "mentions"})
+        if item.narrative_key:
+            narrative_node = f"narrative:{item.narrative_key}"
+            nodes[narrative_node] = {
+                "id": narrative_node,
+                "label": item.narrative_key,
+                "type": "narrative",
+            }
+            edges.append({"source": account_node, "target": narrative_node, "type": "amplifies"})
     return {"nodes": list(nodes.values()), "edges": edges}
+
+
+def list_connector_health() -> List[ConnectorStatus]:
+    return CONNECTOR_HEALTH
+
+
+def list_source_catalog() -> List[SourceCatalogEntry]:
+    return SOURCE_CATALOG
