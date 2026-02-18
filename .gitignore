@@ -9,3 +9,4 @@ apps/web/node_modules/
 apps/web/out/
 apps/api/.venv/
 *.log
+supabase/.temp/
